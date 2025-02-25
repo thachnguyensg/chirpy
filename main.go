@@ -10,7 +10,8 @@ func main() {
 	const port = "8080"
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir(".")))
+	fs := http.FileServer(http.Dir(rootPath))
+	mux.Handle("/app/", http.StripPrefix("/app/", fs))
 
 	server := &http.Server{
 		Handler: mux,
