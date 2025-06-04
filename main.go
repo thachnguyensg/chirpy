@@ -28,10 +28,10 @@ func main() {
 	pwd, _ := os.Getwd()
 	log.Printf("rootpath: %s\n", pwd)
 	fs := http.FileServer(rp)
-	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", fs)))
-	mux.Handle("/healthz", apiCfg.middlewareMetricsInc(http.HandlerFunc(healthzHandler)))
-	mux.Handle("/metrics", metricsHandler(apiCfg))
-	mux.Handle("/reset", resetHandler(apiCfg))
+	mux.Handle("GET /app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", fs)))
+	mux.Handle("GET /api/healthz", apiCfg.middlewareMetricsInc(http.HandlerFunc(healthzHandler)))
+	mux.Handle("GET /api/metrics", metricsHandler(apiCfg))
+	mux.Handle("POST /api/reset", resetHandler(apiCfg))
 
 	server := &http.Server{
 		Handler: mux,
