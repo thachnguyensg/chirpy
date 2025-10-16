@@ -1,0 +1,21 @@
+meta {
+  name: Admin Reset
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/api/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "hehe1223@hehe.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

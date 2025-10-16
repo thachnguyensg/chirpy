@@ -24,7 +24,7 @@ func responseWithError(w http.ResponseWriter, status int, message string) {
 
 func responseWithJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
 	p, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Printf("Error marshalling response: %v\n", err)
