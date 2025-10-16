@@ -1,0 +1,21 @@
+meta {
+  name: Create User
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/api/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "hehe1223@hehe.com"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
