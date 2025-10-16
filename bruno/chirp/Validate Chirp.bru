@@ -1,0 +1,21 @@
+meta {
+  name: Validate Chirp
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/api/validate_chirp
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "body": "fff"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
