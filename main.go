@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
