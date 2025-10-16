@@ -13,10 +13,19 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 
 func metricsHandler(apiCfg *apiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		hits := apiCfg.fileserverHits.Load()
-		w.Write([]byte("Hits: " + fmt.Sprintf("%d", hits)))
+
+		payload := fmt.Sprintf(`
+		<html>
+		  <body>
+		    <h1>Welcome, Chirpy Admin</h1>
+		    <p>Chirpy has been visited %d times!</p>
+		  </body>
+		</html>
+		`, apiCfg.fileserverHits.Load())
+
+		w.Write([]byte(payload))
 	}
 }
 
