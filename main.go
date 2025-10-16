@@ -29,10 +29,12 @@ func main() {
 	log.Printf("rootpath: %s\n", pwd)
 	fs := http.FileServer(rp)
 	mux.Handle("GET /app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/", fs)))
-	mux.Handle("GET /api/healthz", apiCfg.middlewareMetricsInc(http.HandlerFunc(healthzHandler)))
-	mux.Handle("POST /api/validate_chirp", validateChirpHandler(apiCfg))
-	mux.Handle("GET /admin/metrics", metricsHandler(apiCfg))
-	mux.Handle("POST /admin/reset", resetHandler(apiCfg))
+
+	mux.HandleFunc("GET /api/healthz", healthzHandler)
+	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+
+	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.metricsHandler)
 
 	server := &http.Server{
 		Handler: mux,
