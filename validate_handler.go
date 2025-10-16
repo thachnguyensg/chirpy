@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 	"strings"
 )
 
@@ -57,7 +56,11 @@ func cleanupInput(input string) (string, error) {
 
 func cleanupInputV2(input string) (string, error) {
 	fmt.Printf("input: %v\n", input)
-	profanities := []string{"kerfuffle", "sharbert", "fornax"}
+	profanities := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
+	}
 	maskStr := "****"
 	cleaned := strings.Builder{}
 	wb := 0
@@ -66,7 +69,7 @@ func cleanupInputV2(input string) (string, error) {
 		if input[i] == ' ' {
 			if wl > 0 {
 				word := input[wb : wb+wl]
-				if slices.Contains(profanities, strings.ToLower(word)) {
+				if _, ok := profanities[strings.ToLower(word)]; ok {
 					cleaned.WriteString(maskStr)
 				} else {
 					cleaned.WriteString(word)
@@ -86,7 +89,7 @@ func cleanupInputV2(input string) (string, error) {
 	if wl > 0 {
 		fmt.Printf("%v \n", input[wb:wb+wl])
 		word := input[wb : wb+wl]
-		if slices.Contains(profanities, strings.ToLower(word)) {
+		if _, ok := profanities[strings.ToLower(word)]; ok {
 			cleaned.WriteString(maskStr)
 		} else {
 			cleaned.WriteString(word)
