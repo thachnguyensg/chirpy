@@ -11,7 +11,8 @@ import (
 
 func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	type userResponse struct {
 		ID        uuid.UUID `json:"id"`
