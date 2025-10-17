@@ -2,11 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 )
 
-func responseWithError(w http.ResponseWriter, status int, message string) {
+func responseWithError(w http.ResponseWriter, status int, message string, err error) {
+	if err != nil {
+		log.Println(err)
+	}
+
+	if status >= 500 {
+		log.Printf("5xx error: %s", err)
+	}
+
 	type response struct {
 		Error string `json:"error"`
 	}
@@ -15,7 +23,7 @@ func responseWithError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	payload, err := json.Marshal(response{Error: message})
 	if err != nil {
-		fmt.Printf("Error marshalling error response: %v\n", err)
+		log.Printf("Error marshalling error response: %v\n", err)
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -27,8 +35,7 @@ func responseWithJSON(w http.ResponseWriter, status int, payload any) {
 	w.WriteHeader(status)
 	p, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Printf("Error marshalling response: %v\n", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 	w.Write(p)

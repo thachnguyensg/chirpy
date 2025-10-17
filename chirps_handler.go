@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,27 +29,22 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 	var params parameters
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
-		responseWithError(w, http.StatusBadRequest, err.Error())
+		responseWithError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
-	validateChirp(w, params.Body)
-
-	cleanedBody, err := cleanupInputV2(params.Body)
+	cleanedChirp, err := validateChirp(w, params.Body)
 	if err != nil {
-		fmt.Println("Error cleaning up input:", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
 	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
-		Body:   cleanedBody,
+		Body:   cleanedChirp,
 		UserID: params.UserID,
 	})
 	if err != nil {
-		fmt.Println("Error creating chirp:", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 
@@ -64,8 +60,7 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.db.GetChirps(r.Context())
 	if err != nil {
-		fmt.Println("Error fetching chirps:", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 
@@ -87,15 +82,13 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 	cid := r.PathValue("chirp_id")
 	chirpID, err := uuid.Parse(cid)
 	if err != nil {
-		fmt.Println("Error parsing chirp ID:", err)
-		responseWithError(w, http.StatusBadRequest, "Invalid chirp ID")
+		responseWithError(w, http.StatusBadRequest, "Invalid chirp ID", err)
 		return
 	}
 
 	chirp, err := cfg.db.GetChirp(r.Context(), chirpID)
 	if err != nil {
-		fmt.Println("Error fetching chirps:", err)
-		responseWithError(w, http.StatusNotFound, "Chirp not found")
+		responseWithError(w, http.StatusNotFound, "Chirp not found", err)
 		return
 	}
 
@@ -108,12 +101,15 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func validateChirp(w http.ResponseWriter, chirp string) {
+func validateChirp(w http.ResponseWriter, chirp string) (string, error) {
 	if len(chirp) > 140 {
-		fmt.Printf("Chirp body exceeds 140 characters: %d\n", len(chirp))
-		responseWithError(w, http.StatusBadRequest, "Chirp body exceeds 140 characters")
-		return
+		return "", errors.New("Chirp body exceeds 140 characters")
 	}
+	cleanedChirp, err := cleanupInputV2(chirp)
+	if err != nil {
+		return "", err
+	}
+	return cleanedChirp, nil
 }
 
 func cleanupInputV2(input string) (string, error) {

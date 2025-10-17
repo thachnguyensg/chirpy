@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -30,14 +31,14 @@ func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
 	if cfg.platform != "dev" {
 		fmt.Printf("Reset attempted on non-dev platform: %s\n", cfg.platform)
-		responseWithError(w, http.StatusForbidden, "Forbidden")
+		responseWithError(w, http.StatusForbidden, "Forbidden", errors.New("reset is only allowed on dev platform"))
 		return
 	}
 
 	err := cfg.db.DeleteAllUsers(r.Context())
 	if err != nil {
 		fmt.Printf("Error deleting all users: %v\n", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 	responseWithJSON(w, http.StatusOK, map[string]string{"message": "All users deleted"})

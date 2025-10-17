@@ -25,14 +25,14 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 	err := decoder.Decode(&params)
 	if err != nil {
 		fmt.Printf("Error decoding parameters: %v\n", err)
-		responseWithError(w, http.StatusBadRequest, "Something went wrong")
+		responseWithError(w, http.StatusBadRequest, "Something went wrong", err)
 		return
 	}
 
 	user, err := cfg.db.CreateUser(r.Context(), params.Email)
 	if err != nil {
 		fmt.Printf("Error creating user: %v\n", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 

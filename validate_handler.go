@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -23,21 +24,18 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	var params parameters
 	err := decoder.Decode(&params)
 	if err != nil {
-		fmt.Printf("Error decoding parameters: %v\n", err)
-		responseWithError(w, http.StatusBadRequest, "Something went wrong")
+		responseWithError(w, http.StatusBadRequest, "Something went wrong", err)
 		return
 	}
 
 	if len(params.Body) > 140 {
-		fmt.Printf("Chirp body exceeds 140 characters: %d\n", len(params.Body))
-		responseWithError(w, http.StatusBadRequest, "Chirp body exceeds 140 characters")
+		responseWithError(w, http.StatusBadRequest, "Chirp body exceeds 140 characters", errors.New("chirp body exceeds 140 characters"))
 		return
 	}
 
 	cleanedBody, err := cleanupInputV2(params.Body)
 	if err != nil {
-		fmt.Printf("Error cleaning up input: %v\n", err)
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 	responseWithJSON(w, http.StatusOK, valid{CleanedBody: cleanedBody})
