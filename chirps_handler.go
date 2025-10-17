@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -20,40 +19,47 @@ type Chirp struct {
 	UserID    uuid.UUID `json:"user_id"`
 }
 
-func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
-	}
+func (cfg *apiConfig) createChirpHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		type parameters struct {
+			Body string `json:"body"`
+		}
 
-	var params parameters
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		responseWithError(w, http.StatusBadRequest, err.Error(), err)
-		return
-	}
+		userID, err := getAuthenticatedUserID(r.Header, cfg.secretKey)
+		if err != nil {
+			responseWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+			return
+		}
 
-	cleanedChirp, err := validateChirp(w, params.Body)
-	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, err.Error(), err)
-		return
-	}
+		var params parameters
+		err = json.NewDecoder(r.Body).Decode(&params)
+		if err != nil {
+			responseWithError(w, http.StatusBadRequest, err.Error(), err)
+			return
+		}
 
-	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
-		Body:   cleanedChirp,
-		UserID: params.UserID,
-	})
-	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
-		return
-	}
+		cleanedChirp, err := validateChirp(params.Body)
+		if err != nil {
+			responseWithError(w, http.StatusInternalServerError, err.Error(), err)
+			return
+		}
 
-	responseWithJSON(w, http.StatusCreated, Chirp{
-		ID:        chirp.ID,
-		CreatedAt: chirp.CreatedAt,
-		UpdatedAt: chirp.UpdatedAt,
-		Body:      chirp.Body,
-		UserID:    chirp.UserID,
+		chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
+			Body:   cleanedChirp,
+			UserID: userID,
+		})
+		if err != nil {
+			responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
+			return
+		}
+
+		responseWithJSON(w, http.StatusCreated, Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		})
 	})
 }
 
@@ -101,7 +107,7 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func validateChirp(w http.ResponseWriter, chirp string) (string, error) {
+func validateChirp(chirp string) (string, error) {
 	if len(chirp) > 140 {
 		return "", errors.New("Chirp body exceeds 140 characters")
 	}
@@ -113,7 +119,7 @@ func validateChirp(w http.ResponseWriter, chirp string) (string, error) {
 }
 
 func cleanupInputV2(input string) (string, error) {
-	fmt.Printf("input: %v\n", input)
+	// fmt.Printf("input: %v\n", input)
 	profanities := map[string]struct{}{
 		"kerfuffle": {},
 		"sharbert":  {},
@@ -132,7 +138,7 @@ func cleanupInputV2(input string) (string, error) {
 				} else {
 					cleaned.WriteString(word)
 				}
-				fmt.Printf("%v ", word)
+				// fmt.Printf("%v ", word)
 
 				wl = 0
 			}
@@ -145,7 +151,7 @@ func cleanupInputV2(input string) (string, error) {
 		}
 	}
 	if wl > 0 {
-		fmt.Printf("%v \n", input[wb:wb+wl])
+		// fmt.Printf("%v \n", input[wb:wb+wl])
 		word := input[wb : wb+wl]
 		if _, ok := profanities[strings.ToLower(word)]; ok {
 			cleaned.WriteString(maskStr)
@@ -153,7 +159,7 @@ func cleanupInputV2(input string) (string, error) {
 			cleaned.WriteString(word)
 		}
 	}
-	fmt.Printf("cleaned input: %v\n", cleaned.String())
+	// fmt.Printf("cleaned input: %v\n", cleaned.String())
 
 	return cleaned.String(), nil
 }

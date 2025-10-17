@@ -13,12 +13,14 @@ post {
 body:json {
   {
     "email": "{{user_email}}",
-    "password": "{{password}}"
+    "password": "{{password}}",
+    "expires_in_seconds": 60
   }
 }
 
 vars:post-response {
   user_id: res.body.id
+  token: res.body.token
 }
 
 settings {
