@@ -1,12 +1,12 @@
 meta {
-  name: Create Chirp
+  name: Get Chirps
   type: http
-  seq: 5
+  seq: 6
 }
 
-post {
+get {
   url: {{host}}/api/chirps
-  body: json
+  body: none
   auth: inherit
 }
 
@@ -15,6 +15,10 @@ body:json {
     "body": "hahahahahah {{$randomAlphaNumeric}}",
     "user_id": "{{user_id}}"
   }
+}
+
+vars:post-response {
+  chirp_id: res.body[0].id
 }
 
 settings {

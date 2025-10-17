@@ -1,12 +1,12 @@
 meta {
-  name: Create Chirp
+  name: Get Chirp
   type: http
-  seq: 5
+  seq: 7
 }
 
-post {
-  url: {{host}}/api/chirps
-  body: json
+get {
+  url: {{host}}/api/chirps/{{chirp_id}}
+  body: none
   auth: inherit
 }
 

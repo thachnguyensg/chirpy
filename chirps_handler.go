@@ -11,20 +11,18 @@ import (
 	"github.com/thachnguyensg/chirpy/internal/database"
 )
 
-func (cfg *apiConfig) chirpsHandler(w http.ResponseWriter, r *http.Request) {
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body   string    `json:"body"`
 		UserID uuid.UUID `json:"user_id"`
-	}
-	type returnedChirp struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body      string    `json:"body"`
-		UserID    uuid.UUID `json:"user_id"`
-	}
-	type response struct {
-		Chirp returnedChirp `json:"chirp"`
 	}
 
 	var params parameters
@@ -54,7 +52,54 @@ func (cfg *apiConfig) chirpsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseWithJSON(w, http.StatusCreated, returnedChirp{
+	responseWithJSON(w, http.StatusCreated, Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	})
+}
+
+func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.db.GetChirps(r.Context())
+	if err != nil {
+		fmt.Println("Error fetching chirps:", err)
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	var response []Chirp
+	for _, c := range chirps {
+		response = append(response, Chirp{
+			ID:        c.ID,
+			CreatedAt: c.CreatedAt,
+			UpdatedAt: c.UpdatedAt,
+			Body:      c.Body,
+			UserID:    c.UserID,
+		})
+	}
+
+	responseWithJSON(w, http.StatusOK, response)
+}
+
+func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
+	cid := r.PathValue("chirp_id")
+	chirpID, err := uuid.Parse(cid)
+	if err != nil {
+		fmt.Println("Error parsing chirp ID:", err)
+		responseWithError(w, http.StatusBadRequest, "Invalid chirp ID")
+		return
+	}
+
+	chirp, err := cfg.db.GetChirp(r.Context(), chirpID)
+	if err != nil {
+		fmt.Println("Error fetching chirps:", err)
+		responseWithError(w, http.StatusNotFound, "Chirp not found")
+		return
+	}
+
+	responseWithJSON(w, http.StatusOK, Chirp{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
