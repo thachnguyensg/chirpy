@@ -7,13 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/thachnguyensg/chirpy/internal/auth"
+	"github.com/thachnguyensg/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email            string `json:"email"`
-		Password         string `json:"password"`
-		ExpiresInSeconds int64  `json:"expires_in_seconds"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -37,18 +37,32 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExpiry := time.Hour * 1
-	if params.ExpiresInSeconds > 0 {
-		tokenExpiry = time.Second * time.Duration(params.ExpiresInSeconds)
-	}
+	tokenExpiry := time.Hour
 	token, err := auth.MakeJWT(user.ID, cfg.secretKey, tokenExpiry)
 
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Can't create refresh token", err)
+		return
+	}
+
+	_, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(60 * 24 * time.Hour),
+	})
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Can't save refresh token", err)
+		return
+	}
+
 	responseWithJSON(w, http.StatusOK, User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt.Time,
-		UpdatedAt: user.UpdatedAt.Time,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt.Time,
+		UpdatedAt:    user.UpdatedAt.Time,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken,
 	})
 }
 

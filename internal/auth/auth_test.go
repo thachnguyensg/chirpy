@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"log"
 	"testing"
 	"time"
 
@@ -127,5 +128,16 @@ func TestGetBearerToken(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestMakeRefreshToken(t *testing.T) {
+	token, err := MakeRefreshToken()
+	if err != nil {
+		t.Fatalf("Error making refresh token: %v", err)
+	}
+	log.Println("Refresh Token:", token)
+	if len(token) != 64 { // 32 bytes in hex representation
+		t.Fatalf("Expected refresh token length of 64, got %d", len(token))
 	}
 }
