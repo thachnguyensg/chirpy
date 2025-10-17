@@ -94,3 +94,38 @@ func TestMakeAndValidateJWTExpired(t *testing.T) {
 		t.Fatalf("Expected error '%v' for expired token, got: %v", jwt.ErrTokenExpired, err)
 	}
 }
+
+func TestGetBearerToken(t *testing.T) {
+	tests := []struct {
+		name        string
+		headerValue string
+		expected    string
+		expectError bool
+	}{
+		{"Valid Bearer Token", "Bearer my_token_value", "my_token_value", false},
+		{"No Authorization Header", "", "", true},
+		{"Invalid Format", "my_token_value", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			headers := make(map[string][]string)
+			if tt.headerValue != "" {
+				headers["Authorization"] = []string{tt.headerValue}
+			}
+			token, err := GetBearerToken(headers)
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("Expected error but got none")
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Unexpected error: %v", err)
+				}
+				if token != tt.expected {
+					t.Fatalf("Expected token '%s', got '%s'", tt.expected, token)
+				}
+			}
+		})
+	}
+}
