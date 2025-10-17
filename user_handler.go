@@ -33,11 +33,11 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = validateUserPassword(params.Password)
-	if err != nil {
-		responseWithError(w, http.StatusBadRequest, err.Error(), err)
-		return
-	}
+	// err = validateUserPassword(params.Password)
+	// if err != nil {
+	// 	responseWithError(w, http.StatusBadRequest, err.Error(), err)
+	// 	return
+	// }
 
 	hashedPassword, err := auth.HashPassword(params.Password)
 	if err != nil {
