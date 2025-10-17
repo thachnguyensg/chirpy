@@ -1,12 +1,12 @@
 meta {
-  name: Admin Reset
+  name: Create Chirp
   type: http
-  seq: 2
+  seq: 5
 }
 
 post {
-  url: {{host}}/admin/reset
-  body: none
+  url: {{host}}/api/users
+  body: json
   auth: inherit
 }
 
