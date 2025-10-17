@@ -7,18 +7,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thachnguyensg/chirpy/internal/auth"
+	"github.com/thachnguyensg/chirpy/internal/database"
 )
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
 
 func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-	}
-	type userResponse struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -30,17 +33,38 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user, err := cfg.db.CreateUser(r.Context(), params.Email)
+	err = validateUserPassword(params.Password)
 	if err != nil {
-		fmt.Printf("Error creating user: %v\n", err)
+		responseWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 
-	responseWithJSON(w, http.StatusCreated, userResponse{
+	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	})
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
+		return
+	}
+
+	responseWithJSON(w, http.StatusCreated, User{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt.Time,
 		UpdatedAt: user.UpdatedAt.Time,
 		Email:     user.Email,
 	})
+}
+
+func validateUserPassword(pw string) error {
+	if len(pw) < 8 {
+		return fmt.Errorf("password must be at least 8 characters long")
+	}
+	return nil
 }
