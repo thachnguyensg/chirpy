@@ -63,68 +63,6 @@ func (cfg *apiConfig) createChirpHandler() http.Handler {
 	})
 }
 
-func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
-	var returnChirps []database.Chirp
-	var err error
-
-	authorId := r.URL.Query().Get("author_id")
-	if authorId != "" {
-		userID, err := uuid.Parse(authorId)
-		if err != nil {
-			responseWithError(w, http.StatusBadRequest, "Invalid author ID", err)
-			return
-		}
-
-		returnChirps, err = cfg.db.GetChirpsByUserID(r.Context(), userID)
-		if err != nil {
-			responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
-			return
-		}
-	} else {
-		returnChirps, err = cfg.db.GetChirps(r.Context())
-		if err != nil {
-			responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
-			return
-		}
-	}
-
-	var response []Chirp
-	for _, c := range returnChirps {
-		response = append(response, Chirp{
-			ID:        c.ID,
-			CreatedAt: c.CreatedAt,
-			UpdatedAt: c.UpdatedAt,
-			Body:      c.Body,
-			UserID:    c.UserID,
-		})
-	}
-
-	responseWithJSON(w, http.StatusOK, response)
-}
-
-func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
-	cid := r.PathValue("chirp_id")
-	chirpID, err := uuid.Parse(cid)
-	if err != nil {
-		responseWithError(w, http.StatusBadRequest, "Invalid chirp ID", err)
-		return
-	}
-
-	chirp, err := cfg.db.GetChirp(r.Context(), chirpID)
-	if err != nil {
-		responseWithError(w, http.StatusNotFound, "Chirp not found", err)
-		return
-	}
-
-	responseWithJSON(w, http.StatusOK, Chirp{
-		ID:        chirp.ID,
-		CreatedAt: chirp.CreatedAt,
-		UpdatedAt: chirp.UpdatedAt,
-		Body:      chirp.Body,
-		UserID:    chirp.UserID,
-	})
-}
-
 func validateChirp(chirp string) (string, error) {
 	if len(chirp) > 140 {
 		return "", errors.New("Chirp body exceeds 140 characters")
