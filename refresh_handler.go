@@ -30,3 +30,18 @@ func (cfg *apiConfig) refreshTokenHandler(w http.ResponseWriter, r *http.Request
 		"token": newToken,
 	})
 }
+
+func (cfg *apiConfig) revokeTokenHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		responseWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+
+	_, err = cfg.db.RevokeRefreshToken(r.Context(), token)
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Can not revoke token", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

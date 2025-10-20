@@ -1,13 +1,17 @@
 meta {
-  name: Get Chirps
+  name: Revoke token
   type: http
-  seq: 9
+  seq: 7
 }
 
-get {
-  url: {{host}}/api/chirps
+post {
+  url: {{host}}/api/revoke
   body: none
-  auth: inherit
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{refresh_token}}
 }
 
 body:json {
@@ -18,7 +22,7 @@ body:json {
 }
 
 vars:post-response {
-  chirp_id: res.body[0].id
+  token: res.body.token
 }
 
 settings {

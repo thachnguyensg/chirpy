@@ -8,3 +8,9 @@ SELECT u.*
 FROM users u
 JOIN refresh_tokens rt ON u.id = rt.user_id
 WHERE rt.token = $1 AND rt.revoked_at IS NULL AND rt.expires_at > CURRENT_TIMESTAMP;
+
+-- name: RevokeRefreshToken :one
+UPDATE refresh_tokens
+SET revoked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+WHERE token = $1 AND revoked_at IS NULL
+RETURNING *;
