@@ -1,12 +1,12 @@
 meta {
-  name: Create Chirp
+  name: Delete Chirp
   type: http
-  seq: 9
+  seq: 12
 }
 
-post {
-  url: {{host}}/api/chirps
-  body: json
+delete {
+  url: {{host}}/api/chirps/{{chirp_id}}
+  body: none
   auth: none
 }
 
@@ -18,6 +18,10 @@ body:json {
   {
     "body": "hahahahahah {{$randomAlphaNumeric}}"
   }
+}
+
+vars:post-response {
+  chirp_id: res.body.id
 }
 
 settings {

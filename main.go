@@ -66,9 +66,9 @@ func main() {
 
 	mux.HandleFunc("GET /api/chirps", apiCfg.getChirpsHandler)
 	mux.HandleFunc("GET /api/chirps/{chirp_id}", apiCfg.getChirpHandler)
+	mux.HandleFunc("DELETE /api/chirps/{chirp_id}", apiCfg.deleteChirpHandler)
 
-	createChirpAuthHandler := apiCfg.authMiddleware(apiCfg.createChirpHandler())
-	mux.Handle("POST /api/chirps", createChirpAuthHandler)
+	mux.Handle("POST /api/chirps", apiCfg.createChirpHandler())
 
 	server := &http.Server{
 		Handler: mux,
