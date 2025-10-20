@@ -5,9 +5,16 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/thachnguyensg/chirpy/internal/auth"
 )
 
 func (cfg *apiConfig) userChirpyRedWebhookHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := auth.GetApiKey(r.Header)
+	if err != nil {
+		responseWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+
 	var parameters struct {
 		Event string `json:"event"`
 		Data  struct {
@@ -16,7 +23,7 @@ func (cfg *apiConfig) userChirpyRedWebhookHandler(w http.ResponseWriter, r *http
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&parameters)
+	err = decoder.Decode(&parameters)
 	if err != nil {
 		responseWithError(w, http.StatusBadRequest, "Invalid request payload", err)
 		return

@@ -64,14 +64,32 @@ func (cfg *apiConfig) createChirpHandler() http.Handler {
 }
 
 func (cfg *apiConfig) getChirpsHandler(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetChirps(r.Context())
-	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
-		return
+	var returnChirps []database.Chirp
+	var err error
+
+	authorId := r.URL.Query().Get("author_id")
+	if authorId != "" {
+		userID, err := uuid.Parse(authorId)
+		if err != nil {
+			responseWithError(w, http.StatusBadRequest, "Invalid author ID", err)
+			return
+		}
+
+		returnChirps, err = cfg.db.GetChirpsByUserID(r.Context(), userID)
+		if err != nil {
+			responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
+			return
+		}
+	} else {
+		returnChirps, err = cfg.db.GetChirps(r.Context())
+		if err != nil {
+			responseWithError(w, http.StatusInternalServerError, "Something went wrong", err)
+			return
+		}
 	}
 
 	var response []Chirp
-	for _, c := range chirps {
+	for _, c := range returnChirps {
 		response = append(response, Chirp{
 			ID:        c.ID,
 			CreatedAt: c.CreatedAt,
