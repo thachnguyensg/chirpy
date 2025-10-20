@@ -1,13 +1,17 @@
 meta {
-  name: Get Chirps
+  name: Refresh token
   type: http
-  seq: 8
+  seq: 6
 }
 
-get {
-  url: {{host}}/api/chirps
+post {
+  url: {{host}}/api/refresh
   body: none
-  auth: inherit
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{refresh_token}}
 }
 
 body:json {
@@ -15,10 +19,6 @@ body:json {
     "body": "hahahahahah {{$randomAlphaNumeric}}",
     "user_id": "{{user_id}}"
   }
-}
-
-vars:post-response {
-  chirp_id: res.body[0].id
 }
 
 settings {
