@@ -1,0 +1,32 @@
+meta {
+  name: Update User
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{host}}/api/users
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "email": "update{{$randomInt}}@hehe.com",
+    "password": "{{password}}"
+  }
+}
+
+vars:post-response {
+  user_id: res.body.id
+  user_email: res.body.email
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
